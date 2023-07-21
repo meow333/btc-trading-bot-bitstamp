@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OkonkwoOandaV20.TradeLibrary.DataTypes.Pricing;
-using OkonkwoOandaV20.TradeLibrary.DataTypes.Stream;
+using OkonkwoOandaV20.TradeLibrary.Pricing;
+using OkonkwoOandaV20.TradeLibrary.REST;
+using OkonkwoOandaV20.TradeLibrary.REST.Streaming;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +19,7 @@ namespace OkonkwoOandaV20.Framework.JsonConverters
 
       public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
       {
-         PricingStreamResponse response = new PricingStreamResponse();
+         var response = new PricingStreamResponse();
 
          var jsonToken = JToken.Load(reader);
 

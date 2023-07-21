@@ -88,6 +88,7 @@ namespace BTCETradeBot
             this.toolStripStatusLabelLastBought = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelLastSold = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelLastCheck = new System.Windows.Forms.ToolStripStatusLabel();
+            this.loglabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.textBoxAPISecret = new System.Windows.Forms.TextBox();
             this.label18 = new System.Windows.Forms.Label();
             this.textBoxAPIKey = new System.Windows.Forms.TextBox();
@@ -740,13 +741,15 @@ namespace BTCETradeBot
             this.toolStripStatusLabelFee,
             this.toolStripStatusLabelLastBought,
             this.toolStripStatusLabelLastSold,
-            this.toolStripStatusLabelLastCheck});
+            this.toolStripStatusLabelLastCheck,
+            this.loglabel});
             this.statusStrip1.Location = new System.Drawing.Point(0, 682);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1067, 24);
             this.statusStrip1.SizingGrip = false;
             this.statusStrip1.TabIndex = 46;
             this.statusStrip1.Text = "statusStrip1";
+            this.statusStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.statusStrip1_ItemClicked);
             // 
             // toolStripStatusLabelStartStop
             // 
@@ -795,6 +798,14 @@ namespace BTCETradeBot
             this.toolStripStatusLabelLastCheck.Name = "toolStripStatusLabelLastCheck";
             this.toolStripStatusLabelLastCheck.Size = new System.Drawing.Size(109, 19);
             this.toolStripStatusLabelLastCheck.Text = "Last update: Never";
+            // 
+            // loglabel
+            // 
+            this.loglabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.loglabel.Name = "loglabel";
+            this.loglabel.Size = new System.Drawing.Size(33, 19);
+            this.loglabel.Text = "Log: ";
+            this.loglabel.Click += new System.EventHandler(this.loglabel_Click);
             // 
             // textBoxAPISecret
             // 
@@ -3421,6 +3432,7 @@ namespace BTCETradeBot
         private System.Windows.Forms.Label label70;
         private System.Windows.Forms.TextBox textBoxHedgeTakeprofit;
         private System.Windows.Forms.Label label71;
+        private System.Windows.Forms.ToolStripStatusLabel loglabel;
     }
 }
 

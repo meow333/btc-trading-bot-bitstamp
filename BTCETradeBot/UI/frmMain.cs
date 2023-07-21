@@ -28,32 +28,47 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+using System.Security.Cryptography;
+using System.Net;
+using System.Xml;
+using System.Data.SQLite;
+using System.Threading.Tasks;
+
+using RestSharp;
+
 using Bitstamp;
 using BTCETradeBot.Bus;
 using BTCETradeBot.UI;
 using BTCETradeBot.Properties;
-using RestSharp;
-using System.Security.Cryptography;
-using System.Net;
 
 using OkonkwoOandaV20;
+using OkonkwoOandaV20.Framework;
+using OkonkwoOandaV20.TradeLibrary;
+using OkonkwoOandaV20.TradeLibrary.Pricing;
+using OkonkwoOandaV20.TradeLibrary.Instrument;
+using OkonkwoOandaV20.TradeLibrary.REST;
+using OkonkwoOandaV20.TradeLibrary.REST.OrderRequests;
+using OkonkwoOandaV20.TradeLibrary.Order;
+using OkonkwoOandaV20.TradeLibrary.Account;
+using OkonkwoOandaV20.TradeLibrary.Transaction;
+using static OkonkwoOandaV20.TradeLibrary.REST.Rest20;
+
+
+/*using OkonkwoOandaV20;
 using OkonkwoOandaV20.Framework;
 using OkonkwoOandaV20.Framework.Factories;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Communications;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Communications.Requests.Order;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Stream;
 using OkonkwoOandaV20.TradeLibrary.Primitives;
-using System.Threading.Tasks;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Account;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Transaction;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Pricing;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Trade;
-using Trade = OkonkwoOandaV20.TradeLibrary.DataTypes.Trade.Trade;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Order;
-using Order = OkonkwoOandaV20.TradeLibrary.DataTypes.Order.Order;
-using System.Xml;
 using OkonkwoOandaV20.TradeLibrary.DataTypes.Instrument;
-using System.Data.SQLite;
+using Trade = OkonkwoOandaV20.TradeLibrary.DataTypes.Trade.Trade;
+using Order = OkonkwoOandaV20.TradeLibrary.DataTypes.Order.Order;*/
 
 namespace BTCETradeBot
 {
@@ -380,10 +395,10 @@ You should have received a copy of the GNU General Public License along with thi
             if (checkBoxRealTrade.Checked)
             {
 
-                var environment = EEnvironment.Trade;
+                var environment = Rest20.EEnvironment.Trade;
                 var token = textBoxAPIKey.Text; //"85546e7a767218c91725f3cb5a3c55e1-635b6af3c3f4cb9a11f363ba9d6f5766";
 
-                Credentials.SetCredentials(environment, token, AccountID);
+                Rest20.Credentials.SetCredentials(environment, token, AccountID);
 
                 WriteNewLine("Nice! Credentials are set.");
             }
@@ -392,18 +407,20 @@ You should have received a copy of the GNU General Public License along with thi
                 WriteNewLine("Setting your V20 credentials ...");
 
                 AccountID = txtID.Text;// "101-002-10002288-001";//1913854 txtID
-                var environment = EEnvironment.Practice;
+                var environment = Rest20.EEnvironment.Practice;
                 var token = textBoxAPIKey.Text; //"85546e7a767218c91725f3cb5a3c55e1-635b6af3c3f4cb9a11f363ba9d6f5766";
 
-                Credentials.SetCredentials(environment, token, AccountID);
+                Rest20.Credentials.SetCredentials(environment, token, AccountID);
 
                 WriteNewLine("Nice! Credentials are set.");
             }
         }
         static public async void GetPrice(string instrument = InstrumentName.Currency.EURUSD)
         {
-            var accountId = Credentials.GetDefaultCredentials().DefaultAccountId;
-            List<OkonkwoOandaV20.TradeLibrary.DataTypes.Pricing.Price> prices = await Rest20.GetPriceListAsync(accountId, new List<string>() { instrument });
+            var accountId = Rest20.Credentials.GetDefaultCredentials().DefaultAccountId;
+
+            var parameters = new PricingParameters() { instruments = new List<string>() { instrument } };
+            List<Price> prices = await Rest20.GetPricingAsync(accountId, parameters);
             decimal askPrice = prices[0].asks[0].price;
             decimal bidPrice = prices[0].bids[0].price;
 
@@ -461,7 +478,7 @@ You should have received a copy of the GNU General Public License along with thi
             //take profit function
             profitandstoploss();
             // Martingal Risk variable 
-            MartingalRisk();
+            MartingaleRisk();
             toolStripStatusLabelLastCheck.Text = "Updating ...";
             toolStripStatusLabelLastCheck.ForeColor = Color.Green;
             this.Update();
@@ -567,10 +584,13 @@ Server Time: {8}",
                 _ticker.VolumeCurrent,
                 _ticker.ServerTime);
 
+
+
                 if (comboBoxOanda.Text == InstrumentName.Currency.EURUSD)
                 {
-                    List<String> instrutment = new List<string>() { InstrumentName.Currency.EURUSD };
-                    _prices = await Rest20.GetPriceListAsync(AccountID, instrutment);
+
+                    var parameters = new PricingParameters() { instruments = new List<string>() { InstrumentName.Currency.EURUSD } };
+                    _prices = await Rest20.GetPricingAsync(AccountID, parameters);
                     decimal askPrice = _prices[0].asks[0].price;
                     decimal bidPrice = _prices[0].bids[0].price;
                     bool tradestatus = _prices[0].tradeable;
@@ -579,8 +599,9 @@ Server Time: {8}",
                 }
                 else if (comboBoxOanda.Text == InstrumentName.Currency.GBPUSD)
                 {
-                    List<String> instrutment = new List<string>() { InstrumentName.Currency.GBPUSD };
-                    _prices = await Rest20.GetPriceListAsync(AccountID, instrutment);
+
+                    var parameters = new PricingParameters() { instruments = new List<string>() { InstrumentName.Currency.GBPUSD } };
+                    _prices = await Rest20.GetPricingAsync(AccountID, parameters);
                     decimal askPrice = _prices[0].asks[0].price;
                     decimal bidPrice = _prices[0].bids[0].price;
                     bool tradestatus = _prices[0].tradeable;
@@ -589,8 +610,8 @@ Server Time: {8}",
                 }
                 else if (comboBoxActivePair.Text == "XAU_USD")
                 {
-                    List<String> instrutment = new List<string>() { "XAU_USD" };
-                    _prices = await Rest20.GetPriceListAsync(AccountID, instrutment);
+                    var parameters = new PricingParameters() { instruments = new List<string>() { "XAU_USD" } };
+                    _prices = await Rest20.GetPricingAsync(AccountID, parameters);
                     decimal askPrice = _prices[0].asks[0].price;
                     decimal bidPrice = _prices[0].bids[0].price;
                     bool tradestatus = _prices[0].tradeable;
@@ -599,8 +620,8 @@ Server Time: {8}",
                 }
                 else if (comboBoxActivePair.Text == "WTICO_USD")
                 {
-                    List<String> instrutment = new List<string>() { "WTICO_USD" };
-                    _prices = await Rest20.GetPriceListAsync(AccountID, instrutment);
+                    var parameters = new PricingParameters() { instruments = new List<string>() { "WTICO_USD" } };
+                    _prices = await Rest20.GetPricingAsync(AccountID, parameters);
                     decimal askPrice = _prices[0].asks[0].price;
                     decimal bidPrice = _prices[0].bids[0].price;
                     bool tradestatus = _prices[0].tradeable;
@@ -609,8 +630,8 @@ Server Time: {8}",
                 }
                 else if (comboBoxActivePair.Text == "NATGAS_USD")
                 {
-                    List<String> instrutment = new List<string>() { "NATGAS_USD" };
-                    _prices = await Rest20.GetPriceListAsync(AccountID, instrutment);
+                    var parameters = new PricingParameters() { instruments = new List<string>() { "NATGAS_USD" } };
+                    _prices = await Rest20.GetPricingAsync(AccountID, parameters);
                     decimal askPrice = _prices[0].asks[0].price;
                     decimal bidPrice = _prices[0].bids[0].price;
                     bool tradestatus = _prices[0].tradeable;
@@ -657,6 +678,8 @@ Server Time: {8}",
             try
             {
                 _trades = BitstampApi.GetTrades(ActivePair);
+                loglabel.Text = "Log: " + ActivePair;
+                Console.WriteLine("Log: " + ActivePair);
                 listViewTrades.Items.Clear();
                 foreach (var tradeInfo in _trades)
                     AddItemToListViewTrades(tradeInfo);
@@ -1318,8 +1341,10 @@ Server Time: {8}",
             labelBuyCount.Text = _myBuyCount.ToString();
             labelSellCount.Text = _mySellCount.ToString();
 
-            labelBuyPriceDelta.Text = (_newBuyPrice - _prices[0].asks[0].price) + _currency;
-            labelSellPriceDelta.Text = (_newSellPrice - _prices[0].bids[0].price) + _currency;
+            if (_prices != null) {
+                labelBuyPriceDelta.Text = (_newBuyPrice - _prices[0]?.asks[0]?.price) + _currency;
+                labelSellPriceDelta.Text = (_newSellPrice - _prices[0]?.bids[0]?.price) + _currency;
+            }
         }
 
         private void RecordToDatabase(BitstampPair pair, string type, decimal rate, decimal amount, DateTime now)
@@ -1386,7 +1411,7 @@ Server Time: {8}",
             catch { }
         }
 
-        private async Task<OrderPostResponse> PlaceMarketBuyOrder(decimal amounts, decimal price)
+        private async Task<PostOrderResponse> PlaceMarketBuyOrder(decimal amounts, decimal price)
         {
             //string expiry = ConvertDateTimeToAcceptDateFormat(DateTime.Now.AddMonths(1));
             //decimal price = GetOandaPrice(m_TestInstrument) * (decimal)0.9;
@@ -1428,7 +1453,7 @@ Server Time: {8}",
 
             try
             {
-                OrderPostResponse response = await Rest20.PostOrderAsync(AccountID, request);
+                PostOrderResponse response = await Rest20.PostOrderAsync(AccountID, request);
 
                 return response;
             }
@@ -1444,7 +1469,7 @@ Server Time: {8}",
             //m_Results.Verify("11.0", orderTransaction1 != null && orderTransaction1.id > 0, "Order successfully opened");
             //m_Results.Verify("11.1", orderTransaction1.type == TransactionType.MarketIfTouchedOrder, "Order type is correct.");
         }
-        private async Task<OrderPostResponse> PlaceMarketSellOrder(decimal amounts, decimal price)
+        private async Task<PostOrderResponse> PlaceMarketSellOrder(decimal amounts, decimal price)
         {
             //string expiry = ConvertDateTimeToAcceptDateFormat(DateTime.Now.AddMonths(1));
             var owxInstrument = GetOandaInstrument(comboBoxOanda.Text);
@@ -1481,7 +1506,7 @@ Server Time: {8}",
 
             try
             {
-                OrderPostResponse response = await Rest20.PostOrderAsync(AccountID, request);
+                PostOrderResponse response = await Rest20.PostOrderAsync(AccountID, request);
 
                 return response;
             }
@@ -1491,7 +1516,7 @@ Server Time: {8}",
                 return null;
             }
         }
-        private async Task<OrderPostResponse> PlaceLimitBuyOrder(decimal amounts, decimal price)
+        private async Task<PostOrderResponse> PlaceLimitBuyOrder(decimal amounts, decimal price)
         {
             string expiry = ConvertDateTimeToAcceptDateFormat(DateTime.Now.AddMinutes(LimitOrderexpirydate));
             var owxInstrument = GetOandaInstrument(comboBoxOanda.Text);
@@ -1522,7 +1547,7 @@ Server Time: {8}",
 
             try
             {
-                OrderPostResponse response = await Rest20.PostOrderAsync(AccountID, request);
+                PostOrderResponse response = await Rest20.PostOrderAsync(AccountID, request);
 
                 return response;
             }
@@ -1538,7 +1563,7 @@ Server Time: {8}",
             //m_Results.Verify("11.0", orderTransaction1 != null && orderTransaction1.id > 0, "Order successfully opened");
             //m_Results.Verify("11.1", orderTransaction1.type == TransactionType.MarketIfTouchedOrder, "Order type is correct.");
         }
-        private async Task<OrderPostResponse> PlaceLimitSellOrder(decimal amounts, decimal price)
+        private async Task<PostOrderResponse> PlaceLimitSellOrder(decimal amounts, decimal price)
         {
             string expiry = ConvertDateTimeToAcceptDateFormat(DateTime.Now.AddMinutes(LimitOrderexpirydate));
             var owxInstrument = GetOandaInstrument(comboBoxOanda.Text);
@@ -1567,7 +1592,7 @@ Server Time: {8}",
 
             try
             {
-                OrderPostResponse response = await Rest20.PostOrderAsync(AccountID, request);
+                PostOrderResponse response = await Rest20.PostOrderAsync(AccountID, request);
 
                 return response;
             }
@@ -1577,6 +1602,14 @@ Server Time: {8}",
                 return null;
             }
         }
+
+        #region Utilities
+        /// <summary>
+        /// Convert DateTime object to a string of the indicated format
+        /// </summary>
+        /// <param name="time">A DateTime object</param>
+        /// <param name="format">Format type (RFC3339 or UNIX only</param>
+        /// <returns>A date-time string</returns>
         private static string ConvertDateTimeToAcceptDateFormat(DateTime time, AcceptDatetimeFormat format = AcceptDatetimeFormat.RFC3339)
         {
             // look into doing this within the JsonSerializer so that objects can use DateTime instead of string
@@ -1595,16 +1628,23 @@ Server Time: {8}",
             Account_GetAccountsInstruments(str);
             return m_OandaInstruments.FirstOrDefault(x => x.name == instrument);
         }
+
+        /// <summary>
+        /// Retrieve the list of instruments associated with the given accountId
+        /// </summary>
         private static async Task Account_GetAccountsInstruments(string instrument)
         {
+
+            var parameters = new Rest20.AccountInstrumentsParameters() { instruments = new List<string>() { instrument } };
+
             // Get an instrument list (basic)
-            List<Instrument> result = await Rest20.GetAccountInstrumentsAsync(AccountID, instrument);
+            List<Instrument> result = await Rest20.GetAccountInstrumentsAsync(AccountID, parameters);
 
             if (result.Count > 0)
                 m_OandaInstruments = result;
         }
         private bool _waitForPreviousRefreshAPIInfo;
-        private void MartingalRisk()
+        private void MartingaleRisk()
         {
            
             ConsecutiveLossMartingale = int.Parse(textBoxRiskyMat1.Text);
@@ -1717,8 +1757,9 @@ Server Time: {8}",
             {
                 //_activeOrders = _btceApi.GetActiveOrders(ActivePair);
                 //var _activeOrder = _btceApi.GetOpenOrders();
-                var _activeOrder = await Rest20.GetOrderListAsync(AccountID);
-                
+                //var _activeOrder = await Rest20.GetOrderListAsync(AccountID);
+                var _activeOrder = await Rest20.GetOrdersAsync(AccountID);
+
                 _activeOrdersError = false;
                 listViewOrders.Items.Clear();
                 
@@ -1938,7 +1979,10 @@ Server Time: {8}",
             toolStripStatusLabelStartStop.Text = "Stopped";
             toolStripStatusLabelStartStop.ForeColor = Color.Red;
         }
-        
+
+
+        #endregion
+
         #region Visual
         public void ResetComboboxActivePair()
         {
@@ -2163,6 +2207,7 @@ Server Time: {8}",
          }*/
         private void AddItemToListViewTrades(TradeInfo tradeInfo)
         {
+            // Console.WriteLine("Log: " + tradeInfo.Item.ToString() + " / " + tradeInfo.PriceCurrency.ToString());
             ListViewItem.ListViewSubItem[] items =
                 {
                     new ListViewItem.ListViewSubItem() {Name = "Type", Text = tradeInfo.Type.ToString()},
@@ -3195,6 +3240,16 @@ Server Time: {8}",
         }
 
         private void textBoxNbPostive_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+
+        }
+
+        private void loglabel_Click(object sender, EventArgs e)
         {
 
         }

@@ -1,16 +1,31 @@
-﻿using OkonkwoOandaV20.TradeLibrary.DataTypes.Instrument;
+﻿using OkonkwoOandaV20.TradeLibrary.Instrument;
 using System.Collections.Generic;
 
 namespace OkonkwoOandaV20.Framework
 {
    public interface IHasPrices
    {
-      PriceInformation priceInformation { get; set; }
+	  PriceInformation priceInformation { get; set; }
    }
 
+   /// <summary>
+   /// Provides metadata for PriceObject instances
+   /// </summary>
    public class PriceInformation
    {
-      public Instrument instrument { get; set; }
-      public List<string> priceProperties { get; set; }
+	  /// <summary>
+	  /// The name of the Price Object instrument
+	  /// </summary>
+	  public Instrument instrument { get; set; }
+
+	  /// <summary>
+	  /// The PriceObject properties that indicate the threshold price for order execution
+	  /// </summary>
+	  public List<string> priceProperties { get; set; }
+
+	  /// <summary>
+	  /// The PriceObject properties that indicate the threshold units for order execution
+	  /// </summary>
+	  public List<string> unitsProperties { get; set; } = new List<string>();
    }
 }
